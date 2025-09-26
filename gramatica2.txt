@@ -2,4 +2,7 @@ variaveis:S,A
 inicial:S
 terminais:0,1
 producoes
-S: 0S1|SS|1|epsilon
+S: 0S1
+S: SS
+S: 1
+S: epsilon
