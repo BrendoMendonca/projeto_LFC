@@ -103,17 +103,17 @@ def ler_gramatica(arquivo):
     return gramatica
 
 
-#LÓGICA DE GERAÇÃO DE CADEIAS
+#LÓGICA DE GERAÇÃO DE CADEIAS - para o modo rápido
 cadeias_geradas = set()
 gerador_de_derivacoes = None
 
 def inicializar_gerador_determinístico(gramatica, max_profundidade=10):
 
-    #fila para verificar as derivações de forma sistemática
-    fila = [(gramatica['inicial'], [gramatica['inicial']])] #cadeia_atual e derivacao_atual
+    #inicialização da fila com cadeia atual e derivação atual
+    fila = [(gramatica['inicial'], [gramatica['inicial']])]
 
     while fila:
-        cadeia_atual, derivacao_atual = fila.pop(0) #FIFO para busca em largura
+        cadeia_atual, derivacao_atual = fila.pop(0) #utiliza FIFO para buscar o primeiro elemento da fila-cadeira e derivação
         
         if len(derivacao_atual) > max_profundidade:#limitador para evitar cadeias muito grandes e não entrar em loop
             continue
@@ -121,17 +121,17 @@ def inicializar_gerador_determinístico(gramatica, max_profundidade=10):
         pos_nao_terminal = -1
         for i, simbolo in enumerate(cadeia_atual):
             if simbolo in gramatica['variaveis']:
-                pos_nao_terminal = i#pega o não-terminal mais à esquerda
+                pos_nao_terminal = i#pega a posição do não-terminal mais à esquerda
                 break
         
         #se não há mais não-terminais, é uma cadeia final.
         if pos_nao_terminal == -1:
             if cadeia_atual not in cadeias_geradas:
                 cadeias_geradas.add(cadeia_atual)
-                yield (cadeia_atual, derivacao_atual)#retorna a cadeia gerada
+                yield (cadeia_atual, derivacao_atual)#retorna a cadeia gerada e a derivação que deu origem à cadeia
             continue
 
-        #expande o não-terminal mais à esquerda
+        #pega o não terminal e suas produções possíveis
         nao_terminal = cadeia_atual[pos_nao_terminal]
         producoes_possiveis = gramatica['producoes'].get(nao_terminal, [])
 
@@ -141,28 +141,29 @@ def inicializar_gerador_determinístico(gramatica, max_profundidade=10):
             prefixo = cadeia_atual[:pos_nao_terminal]
             sufixo = cadeia_atual[pos_nao_terminal + 1:]
             
+            #expande o não-terminal mais à esquerda
             nova_cadeia = prefixo + (producao_escolhida if producao_escolhida != 'epsilon' else '') + sufixo
             
             nova_derivacao = list(derivacao_atual)#cria cópia
             nova_derivacao.append(nova_cadeia)
             
-            fila.insert(0, (nova_cadeia, nova_derivacao))#cria o novo estado e insere no início da fila
+            fila.insert(0, (nova_cadeia, nova_derivacao))#cria o novo estado(cadeia sendo formada e sua derivação) e insere no início da fila
 
 
 def gerar_cadeia_rapida(gramatica):
     
-    #gera a próxima cadeia única de forma determinística usando o gerador.
+    #gera a próxima cadeia única de forma determinística
     global gerador_de_derivacoes
     if gerador_de_derivacoes is None:
         gerador_de_derivacoes = inicializar_gerador_determinístico(gramatica)
     
     try:
-        cadeia, derivacao = next(gerador_de_derivacoes)
+        cadeia, derivacao = next(gerador_de_derivacoes)#recebe o retorno da linha 131 - cadeia e derivação
         derivacao_formatada = " => ".join(derivacao)
         print(f"Derivação: {derivacao_formatada}")
         return cadeia
     except StopIteration:
-        return "Não foi possível gerar mais cadeias únicas."
+        return "Não foi possível gerar mais cadeias únicas"
 
 def gerar_cadeia_detalhada(gramatica):
     
@@ -170,7 +171,7 @@ def gerar_cadeia_detalhada(gramatica):
     producao = gramatica['inicial']
     derivacao_formatada = [producao]
 
-    while any(s in gramatica['variaveis'] for s in producao):
+    while any(s in gramatica['variaveis'] for s in producao):#loop roda até não tiver mais não-terminais
         print(f"\nEstado atual: {producao}")
         
         #encontra o não-terminal mais à esquerda
@@ -178,7 +179,7 @@ def gerar_cadeia_detalhada(gramatica):
         nao_terminal = ''
         for i, simbolo in enumerate(producao):
             if simbolo in gramatica['variaveis']:
-                nao_terminal_pos = i
+                nao_terminal_pos = i #pega a posição do não terminal mais à esquerda
                 nao_terminal = simbolo
                 break
         
@@ -195,11 +196,11 @@ def gerar_cadeia_detalhada(gramatica):
                     producao_escolhida = producoes_possiveis[escolha - 1]
                     break
                 else:
-                    print("Escolha inválida. Tente novamente.")
+                    print("Escolha inválida. Tente novamente")
             except ValueError:
-                print("Entrada inválida. Digite um número.")
+                print("Entrada inválida. Digite um número")
 
-        #aplica a produção
+        ##isola a variável que será substituída - aplica a produção
         prefixo = producao[:nao_terminal_pos]
         sufixo = producao[nao_terminal_pos + 1:]
         
@@ -213,10 +214,9 @@ def gerar_cadeia_detalhada(gramatica):
 
     return producao
 
-# --- FUNÇÃO PRINCIPAL ---
-
+#FUNÇÃO PRINCIPAL
 def main():
-    #função principal que executa o programa
+
     global gerador_de_derivacoes, cadeias_geradas
     
     try:
@@ -243,16 +243,21 @@ def main():
             try:
                 opcao = int(input("Escolha uma opção: "))
             except ValueError:
-                print("Opção inválida! Por favor, insira um número.")
+                print("Opção inválida! Por favor, insira um número")
                 continue
 
             if opcao == 1:
                 print("\n--- Modo Rápido ---")
-                for _ in range(5): #gera 5 cadeias para demonstrar
+                contador = 0
+                while True:
                     cadeia = gerar_cadeia_rapida(gramatica)
-                    print(f"Cadeia gerada: '{cadeia}'\n")
-                    if "Não foi possível" in cadeia:
+                    if "Não foi possível" in cadeia:#verifica o fim da geração de cadeias
+                        print("Todas as cadeias únicas possíveis foram geradas")
                         break
+                    
+                    contador +=1
+                    print(f"{contador} - Cadeia gerada: '{cadeia}'\n")
+
                 print("Retornando ao menu principal...")
 
             elif opcao == 2:
@@ -261,11 +266,11 @@ def main():
                 print(f"\nCadeia final gerada: '{cadeia}'")
             
             elif opcao == 3:
-                print("Encerrando o programa.")
+                print("Encerrando o programa")
                 break
             
             else:
-                print("Opção inválida! Tente novamente.")
+                print("Opção inválida! Tente novamente")
 
     except Exception as e:
         print(f"\nOcorreu um erro inesperado: {e}")

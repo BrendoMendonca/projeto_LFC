@@ -1,0 +1,23 @@
+variaveis:S,G,P,A,N,L,J,V
+inicial:S
+terminais:o,a,gato,cao,menina,rato,menino,grande,pequeno,esperto,feliz,ve,persegue,encontra
+producoes
+S: GP
+P: VG
+G: ANL
+L: JL
+L: epsilon
+A: o
+A: a
+N: gato
+N: cao
+N: menina
+N: rato
+N: menino
+V: ve
+V: persegue
+V: encontra
+J: grande
+J: pequeno
+J: esperto
+J: feliz
